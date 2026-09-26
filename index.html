@@ -93,7 +93,7 @@
   <div class="view active" id="scanView">
     <div class="card">
       <div id="preview-wrap"><div class="placeholder">Wala pang larawan.<br>I-tap ang "Kumuha ng Larawan" sa baba.</div></div>
-      <input type="file" id="fileInput" accept="image/*" capture="environment">
+      <input type="file" id="fileInput" accept="image/*">
       <div class="btn-row">
         <button class="btn-primary" id="captureBtn">📷 Kumuha ng Larawan</button>
         <button class="btn-secondary" id="analyzeBtn" disabled>🔍 I-diagnose</button>
@@ -118,14 +118,16 @@
       <label for="keyInput">🔑 Gemini API Key (libre)</label>
       <input type="text" id="keyInput" placeholder="I-paste dito ang API key..." autocomplete="off">
       <div id="keyState" class="key-state"></div>
-      <button class="btn-primary" id="saveKeyBtn" style="margin-top:12px;">💾 I-save ang Key</button>
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn-primary" id="getKeyBtn">🔑 Kunin ang Libreng Key</button>
+        <button class="btn-secondary" id="pasteKeyBtn">📌 I-paste mula sa clipboard</button>
+      </div>
+      <button class="btn-primary" id="saveKeyBtn" style="margin-top:10px;">💾 I-save ang Key</button>
       <p class="hint">
-        <b>Paano kumuha ng SARILING libreng API key (walang bayad, walang credit card):</b><br>
-        1. Buksan ang <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (i-copy ang link at i-paste sa browser)<br>
-        2. Mag-sign in gamit ang Google account (Gmail)<br>
-        3. I-click ang <b>"Create API key"</b> — kukunin agad ang key<br>
-        4. I-copy ang key (nagsisimula sa "AIza...")<br>
-        5. Bumalik dito, i-paste sa itaas, tapos i-tap ang <b>"I-save ang Key"</b><br><br>
+        <b>3 taps lang, walang bayad, walang credit card:</b><br>
+        1. I-tap ang <b>"🔑 Kunin ang Libreng Key"</b> — bubukas ang Google AI Studio, naka-sign in na agad ang Google account sa browser<br>
+        2. I-tap ang <b>"Create API key"</b> tapos i-copy ang key (maaaring nagsisimula sa "AIza..." o "AQ.")<br>
+        3. Bumalik dito → i-tap ang <b>"📌 I-paste mula sa clipboard"</b> — DONE! Automatic nang ma-save.<br><br>
         ✅ Isang beses lang ito — naka-save na sa device, hindi na uulitin.<br>
         ✅ Libre ang free tier kada araw — sapat na sa pang-araw-araw na paggamit.
       </p>
@@ -179,11 +181,11 @@ const previewWrap = document.getElementById('preview-wrap');
 const statusEl = document.getElementById('status');
 const resultCard = document.getElementById('resultCard');
 
+// walang capture attribute: bubukas ang totoong camera app ng phone —
+// pwede mag-take ng bago O pumili mula sa mga previous pictures sa gallery
 captureBtn.addEventListener('click', () => fileInput.click());
 
-fileInput.addEventListener('change', () => {
-  const file = fileInput.files[0];
-  if (!file) return;
+function handleFile(file){
   const reader = new FileReader();
   reader.onload = (e) => {
     const img = new Image();
@@ -208,6 +210,13 @@ fileInput.addEventListener('change', () => {
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  handleFile(file);
+  fileInput.value = '';
 });
 
 function resultHTML(r){
@@ -373,6 +382,27 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 // ---- settings ----
 const keyInput = document.getElementById('keyInput');
 const keyState = document.getElementById('keyState');
+
+// diretso buksan ang Google AI Studio para kumuha ng libreng key
+// (naka-sign in na ang Google sa browser, kaya 2 taps na lang)
+document.getElementById('getKeyBtn').addEventListener('click', () => {
+  window.open('https://aistudio.google.com/apikey', '_blank');
+});
+
+// kunin ang key mula sa clipboard at i-save agad — walang manual paste
+document.getElementById('pasteKeyBtn').addEventListener('click', async () => {
+  try {
+    const text = await navigator.clipboard.readText();
+    const v = (text || '').trim();
+    if (!v){ alert('Wala akong nakitang nakopya. I-copy muna ang key sa AI Studio (tap ang key → Copy).'); return; }
+    localStorage.setItem(KEY_STORAGE, v);
+    renderKeyState();
+    statusEl.textContent = '';
+    alert('Na-save ang API key mula sa clipboard! Pwede ka nang mag-diagnose. 🌿');
+  } catch (e) {
+    alert('Hindi ma-access ang clipboard. I-paste na lang manually sa box sa itaas at i-tap ang "I-save ang Key".');
+  }
+});
 
 function renderKeyState(){
   const local = localStorage.getItem(KEY_STORAGE) || '';
