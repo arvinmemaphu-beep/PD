@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Plant Doctor</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f7a3e">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Plant Doctor">
 <style>
   :root{
     --bg:#f4f8f3; --card:#ffffff; --text:#1f2b1f; --muted:#5c6b5a;
@@ -447,6 +454,13 @@ document.getElementById('saveKeyBtn').addEventListener('click', () => {
 });
 
 renderKeyState();
+
+// ---- PWA: service worker (para installable at gumagana offline ang app shell) ----
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => { /* offline mode lang ang effects */ });
+  });
+}
 </script>
 </body>
 </html>
