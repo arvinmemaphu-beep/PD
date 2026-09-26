@@ -120,12 +120,14 @@
       <div id="keyState" class="key-state"></div>
       <button class="btn-primary" id="saveKeyBtn" style="margin-top:12px;">💾 I-save ang Key</button>
       <p class="hint">
-        <b>Paano kumuha ng libreng API key (walang bayad, walang card):</b><br>
-        1. Buksan ang <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a><br>
-        2. Mag-sign in gamit ang Google account<br>
-        3. I-click ang <b>"Create API key"</b> at kopyahin ang key<br>
-        4. I-paste dito sa taas at i-save<br><br>
-        Libre ang free tier — sapat na sa pang-araw-araw na paggamit.
+        <b>Paano kumuha ng SARILING libreng API key (walang bayad, walang credit card):</b><br>
+        1. Buksan ang <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (i-copy ang link at i-paste sa browser)<br>
+        2. Mag-sign in gamit ang Google account (Gmail)<br>
+        3. I-click ang <b>"Create API key"</b> — kukunin agad ang key<br>
+        4. I-copy ang key (nagsisimula sa "AIza...")<br>
+        5. Bumalik dito, i-paste sa itaas, tapos i-tap ang <b>"I-save ang Key"</b><br><br>
+        ✅ Isang beses lang ito — naka-save na sa device, hindi na uulitin.<br>
+        ✅ Libre ang free tier kada araw — sapat na sa pang-araw-araw na paggamit.
       </p>
     </div>
   </div>
@@ -135,6 +137,9 @@
 <script>
 const KEY_STORAGE = 'plantDoctorGeminiKey';
 const HISTORY_KEY = 'plantDoctorHistory';
+// ⬇️ BUILT-IN KEY: i-paste dito ang Gemini API key mo (sa pagitan ng mga quote)
+// para automatic na sa lahat ng device — halimbawa: const DEFAULT_KEY = 'AIzaSy...';
+const DEFAULT_KEY = '';
 const MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
 
 let imageDataUrl = null;
@@ -146,7 +151,7 @@ function esc(s){
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-function getKey(){ return localStorage.getItem(KEY_STORAGE) || ''; }
+function getKey(){ return localStorage.getItem(KEY_STORAGE) || DEFAULT_KEY || ''; }
 function badgeClass(d){
   const s = (d || '').toLowerCase();
   if (s.includes('dying') || s.includes('namamatay')) return 'dying';
@@ -368,10 +373,14 @@ const keyInput = document.getElementById('keyInput');
 const keyState = document.getElementById('keyState');
 
 function renderKeyState(){
+  const local = localStorage.getItem(KEY_STORAGE) || '';
+  keyInput.value = local;
   const k = getKey();
-  keyInput.value = k;
-  if (k){
+  if (local){
     keyState.textContent = '✅ May naka-save nang API key (...' + k.slice(-4) + ')';
+    keyState.className = 'key-state ok';
+  } else if (k){
+    keyState.textContent = '✅ May built-in key na (...' + k.slice(-4) + ') — automatic na, walang kailangang i-setup.';
     keyState.className = 'key-state ok';
   } else {
     keyState.textContent = '⚠️ Wala pang API key — hindi pa gagana ang diagnosis.';
