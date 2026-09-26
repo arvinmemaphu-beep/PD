@@ -93,11 +93,13 @@
   <div class="view active" id="scanView">
     <div class="card">
       <div id="preview-wrap"><div class="placeholder">Wala pang larawan.<br>I-tap ang "Kumuha ng Larawan" sa baba.</div></div>
-      <input type="file" id="fileInput" accept="image/*">
+      <input type="file" id="fileInput" accept="image/*" capture="environment">
+      <input type="file" id="galleryInput" accept="image/*">
       <div class="btn-row">
         <button class="btn-primary" id="captureBtn">📷 Kumuha ng Larawan</button>
-        <button class="btn-secondary" id="analyzeBtn" disabled>🔍 I-diagnose</button>
+        <button class="btn-secondary" id="galleryBtn">🖼️ Mula sa Gallery</button>
       </div>
+      <button class="btn-primary" id="analyzeBtn" disabled style="width:100%; margin-top:10px;">🔍 I-diagnose</button>
       <div id="status"></div>
     </div>
     <div class="card result" id="resultCard" style="display:none;"></div>
@@ -175,15 +177,18 @@ document.querySelectorAll('.tab').forEach(t => {
 
 // ---- capture / analyze ----
 const fileInput = document.getElementById('fileInput');
+const galleryInput = document.getElementById('galleryInput');
 const captureBtn = document.getElementById('captureBtn');
+const galleryBtn = document.getElementById('galleryBtn');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const previewWrap = document.getElementById('preview-wrap');
 const statusEl = document.getElementById('status');
 const resultCard = document.getElementById('resultCard');
 
-// walang capture attribute: bubukas ang totoong camera app ng phone —
-// pwede mag-take ng bago O pumili mula sa mga previous pictures sa gallery
+// may capture attribute: direktang bubukas ang camera ng phone
 captureBtn.addEventListener('click', () => fileInput.click());
+// walang capture attribute: bubuksan ang gallery/photos ng phone
+galleryBtn.addEventListener('click', () => galleryInput.click());
 
 function handleFile(file){
   const reader = new FileReader();
@@ -217,6 +222,13 @@ fileInput.addEventListener('change', () => {
   if (!file) return;
   handleFile(file);
   fileInput.value = '';
+});
+
+galleryInput.addEventListener('change', () => {
+  const file = galleryInput.files[0];
+  if (!file) return;
+  handleFile(file);
+  galleryInput.value = '';
 });
 
 function resultHTML(r){
