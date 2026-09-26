@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plant Doctor</title>
+<style>
+  :root{
+    --bg:#f4f8f3; --card:#ffffff; --text:#1f2b1f; --muted:#5c6b5a;
+    --accent:#2f7a3e; --accent-dark:#1f5c2a; --border:#dbe6d8; --danger:#b23a2e; --warn:#a06b00;
+    box-sizing:border-box;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f150f; --card:#182018; --text:#e7f0e5; --muted:#9fb09a;
+      --accent:#5fbf6f; --accent-dark:#8fd89b; --border:#2a352a;
+    }
+  }
+  *{box-sizing:inherit;}
+  html{height:100%;}
+  body{
+    height:100%; margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  header{width:100%; max-width:480px; padding:16px 16px 4px; text-align:center;}
+  header h1{margin:0; font-size:22px; color:var(--accent-dark);}
+  header p{margin:4px 0 0; color:var(--muted); font-size:13px;}
+  .tabs{display:flex; gap:8px; width:100%; max-width:480px; padding:12px 16px 0;}
+  .tab{flex:1; text-align:center; padding:10px 4px; border-radius:12px; font-size:13px; font-weight:600;
+       background:var(--card); border:1px solid var(--border); color:var(--muted); cursor:pointer; user-select:none;}
+  .tab.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+  main{width:100%; max-width:480px; padding:12px 16px 32px; flex:1;}
+  .view{display:none;} .view.active{display:block;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; margin-bottom:14px;}
+  #preview-wrap{
+    width:100%; aspect-ratio:4/3; border-radius:14px; overflow:hidden;
+    background:var(--border); display:flex; align-items:center; justify-content:center;
+    margin-bottom:12px; position:relative;
+  }
+  #preview-wrap img{width:100%; height:100%; object-fit:cover;}
+  #preview-wrap .placeholder{color:var(--muted); font-size:14px; text-align:center; padding:0 20px;}
+  .btn-row{display:flex; gap:10px;}
+  button{font:inherit; border:none; border-radius:12px; padding:12px 16px; font-size:15px; font-weight:600; cursor:pointer; flex:1;}
+  .btn-primary{background:var(--accent); color:#fff;}
+  .btn-primary:disabled{opacity:.5; cursor:default;}
+  .btn-secondary{background:transparent; color:var(--accent-dark); border:1.5px solid var(--border);}
+  .btn-danger{background:transparent; color:var(--danger); border:1.5px solid var(--border);}
+  input[type=file]{display:none;}
+  #status{margin-top:10px; font-size:13px; color:var(--muted); text-align:center; min-height:18px;}
+  .result h2{font-size:17px; margin:0 0 6px; color:var(--accent-dark);}
+  .badge{display:inline-block; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700; margin-bottom:10px;}
+  .badge.healthy{background:#e2f4e2; color:#1f5c2a;}
+  .badge.notHealthy{background:#fbeecb; color:#a06b00;}
+  .badge.dying{background:#fbe0dd; color:#b23a2e;}
+  .result p{margin:0 0 10px; font-size:14px; line-height:1.5;}
+  .field{display:flex; gap:8px; margin-bottom:8px; font-size:14px; line-height:1.4;}
+  .field .icon{width:20px; flex-shrink:0;}
+  .field b{color:var(--accent-dark);}
+  .hist-item{border-bottom:1px solid var(--border); padding:10px 0; cursor:pointer;}
+  .hist-item:last-child{border-bottom:none;}
+  .hist-row{display:flex; justify-content:space-between; align-items:center; gap:8px;}
+  .hist-row .name{font-weight:700; font-size:14px;}
+  .hist-row .date{font-size:11px; color:var(--muted);}
+  .hist-detail{display:none; margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);}
+  .hist-detail.open{display:block;}
+  .del-btn{background:none; border:none; color:var(--danger); font-size:12px; flex:none; padding:4px 6px; width:auto; flex:0;}
+  .empty{color:var(--muted); font-size:14px; text-align:center; padding:24px 0;}
+  .settings label{display:block; font-size:13px; font-weight:600; margin:0 0 6px; color:var(--accent-dark);}
+  .settings input[type=text]{
+    width:100%; font:inherit; font-size:14px; padding:12px; border-radius:12px;
+    border:1.5px solid var(--border); background:var(--bg); color:var(--text);
+  }
+  .settings .hint{font-size:12.5px; color:var(--muted); line-height:1.55; margin:10px 0 0;}
+  .settings a{color:var(--accent-dark); font-weight:600;}
+  .key-state{font-size:12.5px; margin-top:10px; font-weight:600;}
+  .key-state.ok{color:var(--accent-dark);}
+  .key-state.none{color:var(--warn);}
+  footer{color:var(--muted); font-size:11px; text-align:center; padding-bottom:16px; max-width:480px; line-height:1.5;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌿 Plant Doctor</h1>
+  <p>Kunan ng litrato ang halaman mo — sasabihin namin kung healthy, may sakit, o kulang sa pataba</p>
+</header>
+<div class="tabs">
+  <div class="tab active" data-view="scanView">📷 Scan</div>
+  <div class="tab" data-view="historyView">🗂️ History</div>
+  <div class="tab" data-view="settingsView">⚙️ Setup</div>
+</div>
+<main>
+  <div class="view active" id="scanView">
+    <div class="card">
+      <div id="preview-wrap"><div class="placeholder">Wala pang larawan.<br>I-tap ang "Kumuha ng Larawan" sa baba.</div></div>
+      <input type="file" id="fileInput" accept="image/*" capture="environment">
+      <div class="btn-row">
+        <button class="btn-primary" id="captureBtn">📷 Kumuha ng Larawan</button>
+        <button class="btn-secondary" id="analyzeBtn" disabled>🔍 I-diagnose</button>
+      </div>
+      <div id="status"></div>
+    </div>
+    <div class="card result" id="resultCard" style="display:none;"></div>
+  </div>
+
+  <div class="view" id="historyView">
+    <div class="card">
+      <div class="btn-row" style="margin-bottom:2px;">
+        <button class="btn-secondary" id="exportBtn">⬇️ I-export bilang .txt</button>
+        <button class="btn-danger" id="clearBtn">🗑️ I-clear lahat</button>
+      </div>
+    </div>
+    <div class="card" id="historyList"><div class="empty">Wala pang na-save na history.</div></div>
+  </div>
+
+  <div class="view" id="settingsView">
+    <div class="card settings">
+      <label for="keyInput">🔑 Gemini API Key (libre)</label>
+      <input type="text" id="keyInput" placeholder="I-paste dito ang API key..." autocomplete="off">
+      <div id="keyState" class="key-state"></div>
+      <button class="btn-primary" id="saveKeyBtn" style="margin-top:12px;">💾 I-save ang Key</button>
+      <p class="hint">
+        <b>Paano kumuha ng libreng API key (walang bayad, walang card):</b><br>
+        1. Buksan ang <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a><br>
+        2. Mag-sign in gamit ang Google account<br>
+        3. I-click ang <b>"Create API key"</b> at kopyahin ang key<br>
+        4. I-paste dito sa taas at i-save<br><br>
+        Libre ang free tier — sapat na sa pang-araw-araw na paggamit.
+      </p>
+    </div>
+  </div>
+</main>
+<footer>Naka-save lokal lang sa device na ito. Hindi ito kapalit ng propesyonal na agronomist para sa malalang kaso.</footer>
+
+<script>
+const KEY_STORAGE = 'plantDoctorGeminiKey';
+const HISTORY_KEY = 'plantDoctorHistory';
+const MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
+
+let imageDataUrl = null;
+let lastResult = null;
+
+// ---- helpers ----
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function getKey(){ return localStorage.getItem(KEY_STORAGE) || ''; }
+function badgeClass(d){
+  const s = (d || '').toLowerCase();
+  if (s.includes('dying') || s.includes('namamatay')) return 'dying';
+  if (s.includes('not healthy') || s.includes('hindi malusog') || s.includes('hindi halaman')) return 'notHealthy';
+  return 'healthy';
+}
+
+// ---- tabs ----
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.view).classList.add('active');
+    if (t.dataset.view === 'historyView') renderHistory();
+    if (t.dataset.view === 'settingsView') renderKeyState();
+  });
+});
+
+// ---- capture / analyze ----
+const fileInput = document.getElementById('fileInput');
+const captureBtn = document.getElementById('captureBtn');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const previewWrap = document.getElementById('preview-wrap');
+const statusEl = document.getElementById('status');
+const resultCard = document.getElementById('resultCard');
+
+captureBtn.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      // compress: longest side max 1024px, JPEG q0.85 — para maliit ang upload
+      const max = 1024;
+      let w = img.width, h = img.height;
+      if (w > max || h > max){
+        if (w >= h){ h = Math.round(h * max / w); w = max; }
+        else { w = Math.round(w * max / h); h = max; }
+      }
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      imageDataUrl = cv.toDataURL('image/jpeg', 0.85);
+      previewWrap.innerHTML = '<img src="' + imageDataUrl + '" alt="plant photo">';
+      analyzeBtn.disabled = false;
+      resultCard.style.display = 'none';
+      statusEl.textContent = '';
+    };
+    img.onerror = () => { statusEl.textContent = 'Hindi ma-load ang larawan. Subukan ulit.'; };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function resultHTML(r){
+  const cls = badgeClass(r.diagnosis);
+  return '<span class="badge ' + cls + '">' + esc(r.diagnosis || '') + '</span>' +
+    '<h2>' + esc(r.plant_name || 'Halaman') + '</h2>' +
+    '<p>' + esc(r.summary || '') + '</p>' +
+    '<div class="field"><span class="icon">☀️</span><span><b>Sunlight:</b> ' + esc(r.sunlight || '—') + '</span></div>' +
+    '<div class="field"><span class="icon">💧</span><span><b>Tubig:</b> ' + esc(r.water || '—') + '</span></div>' +
+    '<div class="field"><span class="icon">🌱</span><span><b>Fertilizer / Pataba:</b> ' + esc(r.fertilizer || '—') + '</span></div>' +
+    '<div class="field"><span class="icon">🐛</span><span><b>Pesticide:</b> ' + esc(r.pesticide || '—') + '</span></div>';
+}
+
+function saveToHistory(r){
+  const list = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  list.unshift({ ...r, ts: Date.now() });
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 50)));
+}
+
+async function callGemini(base64, key){
+  const prompt = 'You are a plant health expert ("online doctor for plants"). Look at this plant photo and respond ONLY with JSON matching exactly this shape: ' +
+    '{"plant_name":"specific plant name/species if identifiable e.g. Moringa (Malunggay), else best guess",' +
+    '"diagnosis":"Healthy" or "Not Healthy" or "Dying",' +
+    '"summary":"1-2 sentence Tagalog/Taglish overall assessment",' +
+    '"sunlight":"specific sunlight advice in Tagalog/Taglish",' +
+    '"water":"specific watering advice in Tagalog/Taglish",' +
+    '"fertilizer":"name a specific fertilizer type or product (e.g. 14-14-14 NPK, urea, complete fertilizer, compost) suited to this plant and its condition, in Tagalog/Taglish, including how much and how often to apply, or \'Wala munang kailangan\' if not needed",' +
+    '"pesticide":"name a specific pesticide/insecticide/treatment if pest or disease is visible, in Tagalog/Taglish, or \'Wala munang kailangan\' if healthy"} ' +
+    'If the image is not a plant, set plant_name to "Hindi halaman", diagnosis to "Not Healthy", explain in summary, and set other fields to "N/A".';
+
+  let lastErr = null;
+  for (const model of MODELS){
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [
+          { text: prompt },
+          { inline_data: { mime_type: 'image/jpeg', data: base64 } }
+        ]}],
+        generationConfig: { temperature: 0.4, responseMimeType: 'application/json' }
+      })
+    });
+    if (res.ok){
+      const data = await res.json();
+      const text = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
+                   data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
+                   data.candidates[0].content.parts[0].text;
+      if (!text) throw new Error('Walang sagot mula sa AI.');
+      const clean = text.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+      return JSON.parse(clean);
+    }
+    if (res.status === 400 || res.status === 401 || res.status === 403){
+      const err = new Error('Mali o hindi wastong API key. I-check ang Setup tab.');
+      err.code = 'bad_key';
+      throw err;
+    }
+    if (res.status === 429){
+      const err = new Error('Abot na sa limit ngayong araw. Subukan ulit mamaya.');
+      err.code = 'rate_limited';
+      throw err;
+    }
+    lastErr = new Error('HTTP ' + res.status);
+    // 404/other: try next model
+  }
+  throw lastErr || new Error('Hindi makakonek sa AI.');
+}
+
+analyzeBtn.addEventListener('click', async () => {
+  if (!imageDataUrl) return;
+  const key = getKey();
+  if (!key){
+    statusEl.textContent = 'Kailangan muna ng Gemini API key — tingnan ang ⚙️ Setup tab.';
+    return;
+  }
+  analyzeBtn.disabled = true; captureBtn.disabled = true;
+  statusEl.textContent = 'Sinusuri ang larawan...';
+  resultCard.style.display = 'none';
+
+  try {
+    const base64 = imageDataUrl.split(',')[1];
+    const result = await callGemini(base64, key);
+    lastResult = result;
+    resultCard.innerHTML = resultHTML(result);
+    resultCard.style.display = 'block';
+    saveToHistory(result);
+    statusEl.textContent = '';
+  } catch (err) {
+    console.error(err);
+    if (err.code === 'bad_key') statusEl.textContent = err.message;
+    else if (err.code === 'rate_limited') statusEl.textContent = err.message;
+    else if (err.name === 'TypeError') statusEl.textContent = 'Walang internet connection. Subukan ulit.';
+    else statusEl.textContent = 'May problema sa pag-analyze: ' + (err.message || 'subukan ulit.');
+  } finally {
+    analyzeBtn.disabled = false; captureBtn.disabled = false;
+  }
+});
+
+// ---- history ----
+function renderHistory(){
+  const list = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  const container = document.getElementById('historyList');
+  if (!list.length){ container.innerHTML = '<div class="empty">Wala pang na-save na history.</div>'; return; }
+  container.innerHTML = list.map((r, i) =>
+    '<div class="hist-item">' +
+      '<div class="hist-row" data-open="hd' + i + '">' +
+        '<div><div class="name">' + esc(r.plant_name || 'Halaman') + '</div>' +
+        '<div class="date">' + new Date(r.ts).toLocaleString() + '</div></div>' +
+        '<span class="badge ' + badgeClass(r.diagnosis) + '">' + esc(r.diagnosis || '') + '</span>' +
+      '</div>' +
+      '<div class="hist-detail" id="hd' + i + '">' +
+        resultHTML(r) +
+        '<button class="del-btn" data-del="' + i + '">🗑️ Alisin ito</button>' +
+      '</div>' +
+    '</div>').join('');
+}
+
+document.getElementById('historyList').addEventListener('click', (ev) => {
+  const del = ev.target.closest('[data-del]');
+  if (del){
+    const list = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    list.splice(Number(del.dataset.del), 1);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+    renderHistory();
+    return;
+  }
+  const open = ev.target.closest('[data-open]');
+  if (open){
+    document.getElementById(open.dataset.open).classList.toggle('open');
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if (!confirm('Sigurado ka bang i-clear lahat ng history?')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const list = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  if (!list.length) { alert('Wala pang history na i-export.'); return; }
+  const text = list.map(r => [
+    'Petsa: ' + new Date(r.ts).toLocaleString(),
+    'Halaman: ' + (r.plant_name || ''),
+    'Diagnosis: ' + (r.diagnosis || ''),
+    'Summary: ' + (r.summary || ''),
+    'Sunlight: ' + (r.sunlight || ''),
+    'Tubig: ' + (r.water || ''),
+    'Fertilizer: ' + (r.fertilizer || ''),
+    'Pesticide: ' + (r.pesticide || ''),
+    '----------------------------'
+  ].join('\n')).join('\n\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'plant-doctor-history.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+// ---- settings ----
+const keyInput = document.getElementById('keyInput');
+const keyState = document.getElementById('keyState');
+
+function renderKeyState(){
+  const k = getKey();
+  keyInput.value = k;
+  if (k){
+    keyState.textContent = '✅ May naka-save nang API key (...' + k.slice(-4) + ')';
+    keyState.className = 'key-state ok';
+  } else {
+    keyState.textContent = '⚠️ Wala pang API key — hindi pa gagana ang diagnosis.';
+    keyState.className = 'key-state none';
+  }
+}
+
+document.getElementById('saveKeyBtn').addEventListener('click', () => {
+  const v = keyInput.value.trim();
+  if (!v){
+    localStorage.removeItem(KEY_STORAGE);
+    renderKeyState();
+    statusEl.textContent = '';
+    alert('Naalis ang API key.');
+    return;
+  }
+  localStorage.setItem(KEY_STORAGE, v);
+  renderKeyState();
+  alert('Na-save ang API key! Pwede ka nang mag-diagnose. 🌿');
+});
+
+renderKeyState();
+</script>
+</body>
+</html>
