@@ -1,7 +1,7 @@
 {
-  "name": "Plant Doctor",
-  "short_name": "Plant Doctor",
-  "description": "Kunan ng litrato ang halaman — AI diagnosis: status, sakit, at fertilizer/pataba. Libre.",
+  "name": "Halaman",
+  "short_name": "Halaman",
+  "description": "Doktor ng halaman — kunan ng litrato: AI diagnosis ng status, sakit, at fertilizer/pataba. Libre.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

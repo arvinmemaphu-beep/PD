@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Plant Doctor</title>
+<title>Halaman</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2f7a3e">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Plant Doctor">
+<meta name="apple-mobile-web-app-title" content="Halaman">
 <style>
   :root{
     --bg:#f4f8f3; --card:#ffffff; --text:#1f2b1f; --muted:#5c6b5a;
@@ -88,8 +88,8 @@
 </head>
 <body>
 <header>
-  <h1>🌿 Plant Doctor</h1>
-  <p>Kunan ng litrato ang halaman mo — sasabihin namin kung healthy, may sakit, o kulang sa pataba</p>
+  <h1>🌿 Halaman</h1>
+  <p>Doktor ng halaman — kunan ng litrato, sasabihin kung healthy, may sakit, o kulang sa pataba</p>
 </header>
 <div class="tabs">
   <div class="tab active" data-view="scanView">📷 Scan</div>
@@ -393,7 +393,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   const blob = new Blob([text], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'plant-doctor-history.txt';
+  a.download = 'halaman-history.txt';
   a.click();
   URL.revokeObjectURL(a.href);
 });
