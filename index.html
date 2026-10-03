@@ -54,6 +54,20 @@
   .btn-secondary{background:transparent; color:var(--accent-dark); border:1.5px solid var(--border);}
   .btn-danger{background:transparent; color:var(--danger); border:1.5px solid var(--border);}
   input[type=file]{display:none;}
+  .sheet{display:none; position:fixed; inset:0; z-index:50;}
+  .sheet.open{display:block;}
+  .sheet-backdrop{position:absolute; inset:0; background:rgba(0,0,0,.45);}
+  .sheet-panel{
+    position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+    width:100%; max-width:480px; background:var(--card); border-radius:20px 20px 0 0;
+    padding:16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    display:flex; flex-direction:column; gap:10px;
+    box-shadow:0 -6px 24px rgba(0,0,0,.25);
+  }
+  .sheet-title{text-align:center; font-weight:700; font-size:15px; color:var(--accent-dark); margin-bottom:2px;}
+  .sheet-panel button{flex:none; width:100%; padding:15px 16px; font-size:16px;}
+  .sheet-opt{background:var(--accent); color:#fff;}
+  .sheet-cancel{background:transparent; color:var(--muted); border:1.5px solid var(--border);}
   #status{margin-top:10px; font-size:13px; color:var(--muted); text-align:center; min-height:18px;}
   .result h2{font-size:17px; margin:0 0 6px; color:var(--accent-dark);}
   .badge{display:inline-block; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700; margin-bottom:10px;}
@@ -99,13 +113,10 @@
 <main>
   <div class="view active" id="scanView">
     <div class="card">
-      <div id="preview-wrap"><div class="placeholder">Wala pang larawan.<br>I-tap ang "Kumuha ng Larawan" sa baba.</div></div>
+      <div id="preview-wrap"><div class="placeholder">Wala pang larawan.<br>I-tap ang "Upload Photo" sa baba.</div></div>
       <input type="file" id="fileInput" accept="image/*" capture="environment">
       <input type="file" id="galleryInput" accept="image/*">
-      <div class="btn-row">
-        <button class="btn-primary" id="captureBtn">📷 Kumuha ng Larawan</button>
-        <button class="btn-secondary" id="galleryBtn">🖼️ Mula sa Gallery</button>
-      </div>
+      <button class="btn-primary" id="uploadBtn" style="width:100%;">📷 Upload Photo</button>
       <button class="btn-primary" id="analyzeBtn" disabled style="width:100%; margin-top:10px;">🔍 I-diagnose</button>
       <div id="status"></div>
     </div>
@@ -143,6 +154,15 @@
     </div>
   </div>
 </main>
+<div class="sheet" id="photoSheet">
+  <div class="sheet-backdrop" id="sheetBackdrop"></div>
+  <div class="sheet-panel" role="dialog" aria-label="Pumili ng larawan">
+    <div class="sheet-title">Upload Photo</div>
+    <button class="sheet-opt" id="optCamera">📷 Camera</button>
+    <button class="sheet-opt" id="optGallery">🖼️ Photo Gallery</button>
+    <button class="sheet-cancel" id="optCancel">Cancel</button>
+  </div>
+</div>
 <footer>Naka-save lokal lang sa device na ito. Hindi ito kapalit ng propesyonal na agronomist para sa malalang kaso.</footer>
 
 <script>
@@ -185,17 +205,24 @@ document.querySelectorAll('.tab').forEach(t => {
 // ---- capture / analyze ----
 const fileInput = document.getElementById('fileInput');
 const galleryInput = document.getElementById('galleryInput');
-const captureBtn = document.getElementById('captureBtn');
-const galleryBtn = document.getElementById('galleryBtn');
+const uploadBtn = document.getElementById('uploadBtn');
+const photoSheet = document.getElementById('photoSheet');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const previewWrap = document.getElementById('preview-wrap');
 const statusEl = document.getElementById('status');
 const resultCard = document.getElementById('resultCard');
 
+// Isang button lang: "Upload Photo" -> lalabas ang pagpipilian (Camera / Photo Gallery)
+function openSheet(){ photoSheet.classList.add('open'); }
+function closeSheet(){ photoSheet.classList.remove('open'); }
+uploadBtn.addEventListener('click', openSheet);
+document.getElementById('sheetBackdrop').addEventListener('click', closeSheet);
+document.getElementById('optCancel').addEventListener('click', closeSheet);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
 // may capture attribute: direktang bubukas ang camera ng phone
-captureBtn.addEventListener('click', () => fileInput.click());
+document.getElementById('optCamera').addEventListener('click', () => { closeSheet(); fileInput.click(); });
 // walang capture attribute: bubuksan ang gallery/photos ng phone
-galleryBtn.addEventListener('click', () => galleryInput.click());
+document.getElementById('optGallery').addEventListener('click', () => { closeSheet(); galleryInput.click(); });
 
 function handleFile(file){
   const reader = new FileReader();
@@ -313,7 +340,7 @@ analyzeBtn.addEventListener('click', async () => {
     statusEl.textContent = 'Kailangan muna ng Gemini API key — tingnan ang ⚙️ Setup tab.';
     return;
   }
-  analyzeBtn.disabled = true; captureBtn.disabled = true;
+  analyzeBtn.disabled = true; uploadBtn.disabled = true;
   statusEl.textContent = 'Sinusuri ang larawan...';
   resultCard.style.display = 'none';
 
@@ -332,7 +359,7 @@ analyzeBtn.addEventListener('click', async () => {
     else if (err.name === 'TypeError') statusEl.textContent = 'Walang internet connection. Subukan ulit.';
     else statusEl.textContent = 'May problema sa pag-analyze: ' + (err.message || 'subukan ulit.');
   } finally {
-    analyzeBtn.disabled = false; captureBtn.disabled = false;
+    analyzeBtn.disabled = false; uploadBtn.disabled = false;
   }
 });
 
