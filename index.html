@@ -54,20 +54,21 @@
   .btn-secondary{background:transparent; color:var(--accent-dark); border:1.5px solid var(--border);}
   .btn-danger{background:transparent; color:var(--danger); border:1.5px solid var(--border);}
   input[type=file]{display:none;}
-  .sheet{display:none; position:fixed; inset:0; z-index:50;}
-  .sheet.open{display:block;}
-  .sheet-backdrop{position:absolute; inset:0; background:rgba(0,0,0,.45);}
-  .sheet-panel{
-    position:absolute; left:50%; bottom:0; transform:translateX(-50%);
-    width:100%; max-width:480px; background:var(--card); border-radius:20px 20px 0 0;
-    padding:16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
-    display:flex; flex-direction:column; gap:10px;
-    box-shadow:0 -6px 24px rgba(0,0,0,.25);
+  .menu-wrap{position:relative;}
+  .menu-backdrop{display:none; position:fixed; inset:0; z-index:40; background:transparent;}
+  .menu-backdrop.open{display:block;}
+  .photo-menu{
+    display:none; position:absolute; left:50%; bottom:calc(100% + 8px); transform:translateX(-50%);
+    width:170px; z-index:41; background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:6px; box-shadow:0 8px 24px rgba(0,0,0,.22);
   }
-  .sheet-title{text-align:center; font-weight:700; font-size:15px; color:var(--accent-dark); margin-bottom:2px;}
-  .sheet-panel button{flex:none; width:100%; padding:15px 16px; font-size:16px;}
-  .sheet-opt{background:var(--accent); color:#fff;}
-  .sheet-cancel{background:transparent; color:var(--muted); border:1.5px solid var(--border);}
+  .photo-menu.open{display:block;}
+  .photo-menu button{
+    flex:none; display:flex; align-items:center; gap:10px; width:100%;
+    background:transparent; color:var(--text); text-align:left;
+    padding:11px 12px; font-size:15px; font-weight:500; border-radius:10px;
+  }
+  .photo-menu button:hover, .photo-menu button:active{background:var(--bg);}
   #status{margin-top:10px; font-size:13px; color:var(--muted); text-align:center; min-height:18px;}
   .result h2{font-size:17px; margin:0 0 6px; color:var(--accent-dark);}
   .badge{display:inline-block; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700; margin-bottom:10px;}
@@ -116,7 +117,14 @@
       <div id="preview-wrap"><div class="placeholder">Wala pang larawan.<br>I-tap ang "Upload Photo" sa baba.</div></div>
       <input type="file" id="fileInput" accept="image/*" capture="environment">
       <input type="file" id="galleryInput" accept="image/*">
-      <button class="btn-primary" id="uploadBtn" style="width:100%;">📷 Upload Photo</button>
+      <div class="menu-wrap">
+        <div class="menu-backdrop" id="menuBackdrop"></div>
+        <div class="photo-menu" id="photoMenu" role="menu">
+          <button id="optCamera" role="menuitem">📷 Camera</button>
+          <button id="optGallery" role="menuitem">🖼️ Gallery</button>
+        </div>
+        <button class="btn-primary" id="uploadBtn" style="width:100%; position:relative; z-index:41;">📷 Upload Photo</button>
+      </div>
       <button class="btn-primary" id="analyzeBtn" disabled style="width:100%; margin-top:10px;">🔍 I-diagnose</button>
       <div id="status"></div>
     </div>
@@ -154,15 +162,6 @@
     </div>
   </div>
 </main>
-<div class="sheet" id="photoSheet">
-  <div class="sheet-backdrop" id="sheetBackdrop"></div>
-  <div class="sheet-panel" role="dialog" aria-label="Pumili ng larawan">
-    <div class="sheet-title">Upload Photo</div>
-    <button class="sheet-opt" id="optCamera">📷 Camera</button>
-    <button class="sheet-opt" id="optGallery">🖼️ Photo Gallery</button>
-    <button class="sheet-cancel" id="optCancel">Cancel</button>
-  </div>
-</div>
 <footer>Naka-save lokal lang sa device na ito. Hindi ito kapalit ng propesyonal na agronomist para sa malalang kaso.</footer>
 
 <script>
@@ -206,23 +205,23 @@ document.querySelectorAll('.tab').forEach(t => {
 const fileInput = document.getElementById('fileInput');
 const galleryInput = document.getElementById('galleryInput');
 const uploadBtn = document.getElementById('uploadBtn');
-const photoSheet = document.getElementById('photoSheet');
+const photoMenu = document.getElementById('photoMenu');
+const menuBackdrop = document.getElementById('menuBackdrop');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const previewWrap = document.getElementById('preview-wrap');
 const statusEl = document.getElementById('status');
 const resultCard = document.getElementById('resultCard');
 
-// Isang button lang: "Upload Photo" -> lalabas ang pagpipilian (Camera / Photo Gallery)
-function openSheet(){ photoSheet.classList.add('open'); }
-function closeSheet(){ photoSheet.classList.remove('open'); }
-uploadBtn.addEventListener('click', openSheet);
-document.getElementById('sheetBackdrop').addEventListener('click', closeSheet);
-document.getElementById('optCancel').addEventListener('click', closeSheet);
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+// Isang button lang: "Upload Photo" -> maliit na menu (Camera / Gallery)
+function openMenu(){ photoMenu.classList.add('open'); menuBackdrop.classList.add('open'); }
+function closeMenu(){ photoMenu.classList.remove('open'); menuBackdrop.classList.remove('open'); }
+uploadBtn.addEventListener('click', () => { photoMenu.classList.contains('open') ? closeMenu() : openMenu(); });
+menuBackdrop.addEventListener('click', closeMenu);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
 // may capture attribute: direktang bubukas ang camera ng phone
-document.getElementById('optCamera').addEventListener('click', () => { closeSheet(); fileInput.click(); });
+document.getElementById('optCamera').addEventListener('click', () => { closeMenu(); fileInput.click(); });
 // walang capture attribute: bubuksan ang gallery/photos ng phone
-document.getElementById('optGallery').addEventListener('click', () => { closeSheet(); galleryInput.click(); });
+document.getElementById('optGallery').addEventListener('click', () => { closeMenu(); galleryInput.click(); });
 
 function handleFile(file){
   const reader = new FileReader();
