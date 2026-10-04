@@ -54,11 +54,13 @@
   .btn-secondary{background:transparent; color:var(--accent-dark); border:1.5px solid var(--border);}
   .btn-danger{background:transparent; color:var(--danger); border:1.5px solid var(--border);}
   input[type=file]{display:none;}
-  .menu-wrap{position:relative;}
+  .menu-wrap{position:relative; flex:1; min-width:0;}
+  .action-row{display:flex; gap:10px; align-items:stretch;}
+  #uploadBtn, #analyzeBtn{padding:12px 8px; white-space:nowrap;}
   .menu-backdrop{display:none; position:fixed; inset:0; z-index:40; background:transparent;}
   .menu-backdrop.open{display:block;}
   .photo-menu{
-    display:none; position:absolute; left:50%; bottom:calc(100% + 8px); transform:translateX(-50%);
+    display:none; position:absolute; left:0; bottom:calc(100% + 8px);
     width:170px; z-index:41; background:var(--card); border:1px solid var(--border);
     border-radius:14px; padding:6px; box-shadow:0 8px 24px rgba(0,0,0,.22);
   }
@@ -117,15 +119,17 @@
       <div id="preview-wrap"><div class="placeholder">Wala pang larawan.<br>I-tap ang "Upload Photo" sa baba.</div></div>
       <input type="file" id="fileInput" accept="image/*" capture="environment">
       <input type="file" id="galleryInput" accept="image/*">
-      <div class="menu-wrap">
-        <div class="menu-backdrop" id="menuBackdrop"></div>
-        <div class="photo-menu" id="photoMenu" role="menu">
-          <button id="optCamera" role="menuitem">📷 Camera</button>
-          <button id="optGallery" role="menuitem">🖼️ Gallery</button>
+      <div class="action-row">
+        <div class="menu-wrap">
+          <div class="menu-backdrop" id="menuBackdrop"></div>
+          <div class="photo-menu" id="photoMenu" role="menu">
+            <button id="optCamera" role="menuitem">📷 Camera</button>
+            <button id="optGallery" role="menuitem">🖼️ Gallery</button>
+          </div>
+          <button class="btn-primary" id="uploadBtn" style="width:100%; position:relative; z-index:41;">📷 Upload Photo</button>
         </div>
-        <button class="btn-primary" id="uploadBtn" style="width:100%; position:relative; z-index:41;">📷 Upload Photo</button>
+        <button class="btn-primary" id="analyzeBtn" disabled>🔍 I-diagnose</button>
       </div>
-      <button class="btn-primary" id="analyzeBtn" disabled style="width:100%; margin-top:10px;">🔍 I-diagnose</button>
       <div id="status"></div>
     </div>
     <div class="card result" id="resultCard" style="display:none;"></div>
